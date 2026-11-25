@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 // One micro-confession in exactly two parts: a To: line naming who the
@@ -38,7 +38,16 @@ validateConfession(CONFESSION);
 
 const outputDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
 mkdirSync(outputDir, { recursive: true });
-writeFileSync(join(outputDir, "entry.txt"), CONFESSION + "\n", "utf8");
+const outputPath = join(outputDir, "entry.txt");
+writeFileSync(outputPath, CONFESSION + "\n", "utf8");
+
+// Read the file back and confirm the gate sees exactly what was intended:
+// a byte-for-byte match with the validated confession, so a partial write
+// or an encoding surprise fails loudly instead of reaching the judge.
+const written = readFileSync(outputPath, "utf8");
+if (written !== CONFESSION + "\n") {
+  throw new Error("entry.txt does not match the validated confession");
+}
 
 // Print the confession exactly as written, nothing else after it.
 process.stdout.write(CONFESSION + "\n");
